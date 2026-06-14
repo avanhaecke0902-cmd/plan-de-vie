@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Plan de Vie — Alexis</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2E86AB">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Plan de Vie">
+<link rel="apple-touch-icon" href="icon.svg">
+</head>
+<body>
+<div id="app">
+  <div id="content">
+    <!-- TODAY -->
+    <div id="view-today" class="view active">
+      <div id="hdr">
+        <div class="lvl-row">
+          <div><div class="lvl-name" id="h-lname">Premier Pas</div><div class="era-name" id="h-era">La Recrue · Niveau 1</div></div>
+          <div class="streak-b">🔥 <span id="h-streak">0</span> j</div>
+        </div>
+        <div class="xp-row"><span id="h-xp-cur">0 XP</span><span id="h-xp-nxt">/ 150 XP pour le prochain niveau</span></div>
+        <div class="xp-bg"><div class="xp-fill" id="h-xp-bar" style="width:0%"></div></div>
+      </div>
+      <div id="date-card">
+        <div><div class="lbl" id="td-date"></div><div class="lbl2" id="td-type"></div></div>
+        <div class="dc-right">
+          <div style="font-size:13px;font-weight:700;color:var(--success)">+<span id="td-bgt">0.00</span> € cagnotte</div>
+          <div style="font-size:11px;color:var(--muted)">+<span id="td-xp">0</span> XP aujourd'hui</div>
+        </div>
+      </div>
+      <div id="nic-card">
+        <div id="nic-streak-bar">
+          <span id="nic-ic"></span>
+          <div style="flex:1">
+            <div id="nic-label" style="font-size:12px;font-weight:700"></div>
+            <div id="nic-sub" style="font-size:10px;opacity:.7;margin-top:1px"></div>
+          </div>
+          <div id="nic-count" style="font-size:22px;font-weight:800;line-height:1"></div>
+        </div>
+      </div>
+      <div id="countdown-card">
+        <div style="text-align:center">
+          <div class="cd-days" id="cd-days">—</div>
+          <div class="cd-label">jours</div>
+        </div>
+        <div class="cd-prog-wrap">
+          <div class="cd-left">Saison 1 — Fin le <strong id="cd-end-lbl"></strong></div>
+          <div class="cd-prog-bg"><div class="cd-prog-fill" id="cd-bar" style="width:0%"></div></div>
+          <div class="cd-pct" id="cd-pct"></div>
+        </div>
+      </div>
+      <div id="mission-card">
+        <div class="mission-title">📋 Aujourd'hui</div>
+        <div class="mission-text" id="mission-day"></div>
+      </div>
+      <div id="combo">⚡ Journée parfaite — Bonus ×1,5 XP activé !</div>
+      <div class="st">Habitudes du jour</div>
+      <div id="hlist"></div>
+      <div class="st" style="margin-top:16px">Habitudes de la semaine</div>
+      <div id="wlist"></div>
+    </div>
+    <!-- SUIVI -->
+    <div id="view-semaine" class="view">
+      <div class="st" style="margin-top:0">Heatmap — 12 semaines</div>
+      <div id="heatmap-months" class="hm-months"></div>
+      <div id="heatmap" class="heatmap-wrap"></div>
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:12px">
+        <span style="font-size:9px;color:var(--muted)">0%</span>
+        <div class="hm-cell c0"></div><div class="hm-cell c1"></div><div class="hm-cell c2"></div><div class="hm-cell c3"></div><div class="hm-cell c4"></div><div class="hm-cell c5"></div><div class="hm-cell c6"></div>
+        <span style="font-size:9px;color:var(--muted)">100%</span>
+      </div>
+      <div class="st">Stats globales</div>
+      <div class="sg">
+        <div class="sgc"><div class="sgv" id="s-lvl">1</div><div class="sgk">Niveau</div></div>
+        <div class="sgc"><div class="sgv" id="s-streak">0</div><div class="sgk">🔥 Série</div></div>
+        <div class="sgc"><div class="sgv" id="s-days">0</div><div class="sgk">Jours actifs</div></div>
+        <div class="sgc"><div class="sgv" id="s-nic">0</div><div class="sgk">Jours nicotine</div></div>
+        <div class="sgc"><div class="sgv" id="s-xptot">0</div><div class="sgk">XP Total</div></div>
+      </div>
+      <div id="avg4wk" style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px"></div>
+      <div class="st">Habitudes — 4 dernières semaines</div>
+      <div id="hab-stats" style="background:var(--card);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px"></div>
+      <div class="wk-nav">
+        <button class="wk-nav-btn" id="wk-prev" onclick="shiftWk(-1)">‹</button>
+        <span class="wk-nav-lbl" id="wk-nav-lbl">Cette semaine</span>
+        <button class="wk-nav-btn" id="wk-next" onclick="shiftWk(1)" disabled>›</button>
+      </div>
+      <div class="wg" id="week-grid"></div>
+      <div id="day-detail"></div>
+      <div class="card" style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700">XP par jour</span>
+          <span style="font-size:12px;color:var(--muted)" id="w-xp-lbl">0 XP cette semaine</span>
+        </div>
+        <div id="xp-chart" style="display:flex;align-items:flex-end;gap:6px;height:60px"></div>
+        <div id="xp-chart-labels" style="display:flex;gap:6px;margin-top:4px"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:13px;font-weight:700">💰 Cagnotte semaine</span>
+          <span style="font-size:15px;font-weight:800;color:var(--success)" id="w-bgt">0.00 €</span>
+        </div>
+        <div class="pb-bg"><div class="pb-fill" id="w-bgt-bar" style="width:0%;background:var(--success)"></div></div>
+        <div style="font-size:11px;color:var(--muted);text-align:right;margin-top:3px">max 30 € / semaine</div>
+      </div>
+      <div class="st" id="wc-title">Cette semaine vs la semaine dernière</div>
+      <div class="wc-row">
+        <div class="wc-card">
+          <div class="wc-label">XP gagné</div>
+          <div class="wc-val" id="wc-xp">0</div>
+          <div class="wc-diff" id="wc-xp-diff"></div>
+        </div>
+        <div class="wc-card">
+          <div class="wc-label">Complétion</div>
+          <div class="wc-val" id="wc-pct">0%</div>
+          <div class="wc-diff" id="wc-pct-diff"></div>
+        </div>
+      </div>
+      <button class="btn" style="margin-top:10px;background:var(--muted);font-size:12px;padding:10px" onclick="exportCSV()">Exporter mes données (CSV)</button>
+      <button class="btn" style="margin-top:8px;background:#fee2e2;color:#b91c1c;font-size:12px;padding:10px;border:1px solid #fca5a5" onclick="resetAll()">Remettre à zéro toutes les données</button>
+    </div>
+    <!-- TROPHEES -->
+    <div id="view-trophees" class="view">
+      <div class="st" style="margin-top:0">Trophées</div>
+      <div class="tg" id="tgrid"></div>
+    </div>
+    <!-- CAGNOTTE -->
+    <div id="view-cagnotte" class="view">
+      <div id="bal-card">
+        <div class="bl">Cagnotte disponible</div>
+        <div class="ba"><span id="bal">0.00</span> €</div>
+        <div class="bw">+<span id="bal-wk">0.00</span> € gagnés cette semaine</div>
+      </div>
+      <div class="pf">
+        <div class="ft">Ajouter un achat plaisir</div>
+        <div class="ig"><label>Qu'est-ce que tu t'es offert ?</label><input type="text" id="pur-n" placeholder="soirée, restaurant, achat..."></div>
+        <div class="ig"><label>Montant (€)</label><input type="number" id="pur-a" placeholder="0.00" min="0" step="0.01"></div>
+        <button class="btn" onclick="addPurchase()">Déduire de ma cagnotte</button>
+      </div>
+      <div class="card" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:700">Évolution de la cagnotte</span>
+          <span style="font-size:11px;color:var(--muted)" id="bgt-chart-lbl"></span>
+        </div>
+        <canvas id="bgt-chart" height="80" style="width:100%"></canvas>
+      </div>
+      <div class="st">Historique</div>
+      <div id="txlist"></div>
+    </div>
+    <!-- PARAMÈTRES -->
+    <div id="view-params" class="view">
+      <div class="st" style="margin-top:0">Habitudes quotidiennes</div>
+      <div id="params-habAll"></div>
+      <button class="btn-add" onclick="addHab('All')">+ Ajouter une habitude</button>
+      <div class="st">Habitudes hebdomadaires</div>
+      <div id="params-habWK"></div>
+      <button class="btn-add" onclick="addHab('WK')">+ Ajouter une habitude</button>
+      <div class="params-info">Modifier l'XP ou le poids € recalcule l'historique depuis le début.</div>
+      <button class="save-btn" style="margin-top:10px" onclick="saveHabs()">Enregistrer les habitudes</button>
+      <div class="saved-toast" id="saved-toast-params">✓ Enregistré !</div>
+      <div class="st">Saison 1</div>
+      <div class="card-sm" style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;color:var(--muted)">Date de fin</span>
+        <input type="date" id="p-s1end" onchange="saveSeasonEnd()" style="border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit;color:var(--text);background:var(--bg)">
+      </div>
+      <div class="st">Synchronisation</div>
+      <div class="card-sm">
+        <div class="sync-info">Compte : <strong id="sync-user-email">—</strong></div>
+        <div id="sync-logout-wrap" style="display:none">
+          <button class="btn" style="background:#fee2e2;color:#b91c1c;font-size:12px;padding:10px" onclick="syncLogout()">Se déconnecter</button>
+        </div>
+        <div id="sync-login-wrap">
+          <button class="btn" style="font-size:12px;padding:10px" onclick="syncLoginAgain()">Se connecter / changer d'appareil</button>
+        </div>
+        <div id="sync-settings-status" style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center"></div>
+      </div>
+      <div class="st">Données</div>
+      <button class="btn" onclick="exportJSON()">Exporter toutes mes données (JSON)</button>
+      <input type="file" id="json-import" accept=".json" style="display:none" onchange="doImportJSON(this)">
+      <button class="btn" style="margin-top:8px;background:var(--muted)" onclick="document.getElementById('json-import').click()">Restaurer depuis un fichier JSON</button>
+    </div>
+    <!-- BILAN -->
+    <div id="view-bilan" class="view">
+      <div class="st" style="margin-top:0">Bilan de cette semaine</div>
+      <div class="bilan-block">
+        <h3>📖 Bilan</h3>
+        <textarea id="b-bilan" placeholder="Comment s'est passée cette semaine ? Points forts, difficultés, apprentissages..."></textarea>
+      </div>
+      <div class="st" style="margin-top:8px;margin-bottom:4px">Planification — semaine prochaine</div>
+      <div class="bilan-block">
+        <h3>📅 Lundi</h3>
+        <textarea id="b-lundi" placeholder="Ce que tu as prévu ou ce sur quoi tu veux rester focus lundi..."></textarea>
+      </div>
+      <div class="bilan-block">
+        <h3>📅 Mardi</h3>
+        <textarea id="b-mardi" placeholder="Mardi..."></textarea>
+      </div>
+      <div class="bilan-block">
+        <h3>📅 Mercredi</h3>
+        <textarea id="b-mercredi" placeholder="Mercredi..."></textarea>
+      </div>
+      <div class="bilan-block">
+        <h3>📅 Jeudi</h3>
+        <textarea id="b-jeudi" placeholder="Jeudi..."></textarea>
+      </div>
+      <div class="bilan-block">
+        <h3>📅 Vendredi</h3>
+        <textarea id="b-vendredi" placeholder="Vendredi..."></textarea>
+      </div>
+      <div class="bilan-block">
+        <h3>📅 Samedi</h3>
+        <textarea id="b-samedi" placeholder="Samedi..."></textarea>
+      </div>
+      <div class="bilan-block">
+        <h3>📅 Dimanche</h3>
+        <textarea id="b-dimanche" placeholder="Dimanche..."></textarea>
+      </div>
+      <button class="save-btn" onclick="saveBilan()">Enregistrer</button>
+      <div class="saved-toast" id="saved-toast">✓ Bilan enregistré !</div>
+      <div id="arch-list"></div>
+    </div>
+  </div>
+  <nav id="nav">
+    <button class="nb active" onclick="sv('today',this)"><span class="ni">✓</span>Aujourd'hui</button>
+    <button class="nb" onclick="sv('semaine',this)"><span class="ni">📊</span>Suivi</button>
+    <button class="nb" onclick="sv('trophees',this)"><span class="ni">🏆</span>Trophées</button>
+    <button class="nb" onclick="sv('cagnotte',this)"><span class="ni">💰</span>Cagnotte</button>
+    <button class="nb" onclick="sv('bilan',this);loadBilan()"><span class="ni">📝</span>Bilan</button>
+    <button class="nb" onclick="sv('params',this);rParams();if(typeof updateSyncUI==='function')updateSyncUI()"><span class="ni">⚙</span>Réglages</button>
+  </nav>
+</div>
+<div id="trophy-toast"></div>
+
+<!-- Auth overlay -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">Plan de Vie</div>
+    <div id="auth-s1">
+      <p class="auth-desc">Connecte-toi pour synchroniser tes données entre appareils.</p>
+      <input type="email" id="auth-email" placeholder="ton@email.com" autocomplete="email">
+      <button class="btn" id="auth-btn-send" onclick="authSendOTP()">Recevoir le code</button>
+      <button class="auth-skip" onclick="authSkip()">Utiliser sans synchronisation</button>
+    </div>
+    <div id="auth-s2" style="display:none">
+      <p class="auth-desc">Code envoyé à<br><strong id="auth-sent-to"></strong><br>Vérifie tes e-mails.</p>
+      <input type="text" id="auth-otp" placeholder="Code à 6 chiffres" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      <button class="btn" id="auth-btn-verify" onclick="authVerifyOTP()">Se connecter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync dot -->
+<div id="sync-dot" title="Hors ligne"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script src="sync.js"></script>
+</body>
+</html>

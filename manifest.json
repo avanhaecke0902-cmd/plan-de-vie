@@ -1,0 +1,13 @@
+{
+  "name": "Plan de Vie — Alexis",
+  "short_name": "Plan de Vie",
+  "description": "Suivi de mes habitudes et progression badminton",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F4F7FA",
+  "theme_color": "#3C3489",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

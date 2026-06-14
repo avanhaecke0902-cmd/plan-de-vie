@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fond blanc/transparent pour icône app -->
+  <circle cx="256" cy="238" r="190" fill="none" stroke="#3C3489" stroke-width="18"/>
+
+  <!-- Flamme extérieure violet foncé -->
+  <path d="M256 370
+    C196 334 170 268 194 188
+    C202 228 224 232 222 196
+    C246 232 272 210 264 148
+    C310 196 316 290 256 370Z"
+    fill="#3C3489"/>
+
+  <!-- Flamme intérieure violet clair -->
+  <path d="M256 370
+    C222 346 216 306 230 264
+    C238 288 248 286 248 264
+    C264 288 270 264 266 236
+    C292 268 292 322 256 370Z"
+    fill="#AFA9EC"/>
+
+  <!-- Reflet tip -->
+  <path d="M256 370
+    C242 358 240 336 248 312
+    C252 328 255 326 256 312
+    C258 326 260 314 259 300
+    C268 316 268 350 256 370Z"
+    fill="#EEEDFE" opacity="0.8"/>
+
+  <!-- Texte PDV sous le cercle -->
+  <text x="256" y="474"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+    font-size="48" font-weight="500" letter-spacing="12"
+    text-anchor="middle" fill="#3C3489">PDV</text>
+</svg>
