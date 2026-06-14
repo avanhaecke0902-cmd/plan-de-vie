@@ -4,6 +4,13 @@ let _db = null;
 let _syncTimer = null;
 let _pendingEmail = null;
 
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+  ]);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function supaInit() {
   if (typeof SUPA_URL === 'undefined' || SUPA_URL.includes('XXXXXXXXXX')) return;
@@ -41,23 +48,25 @@ async function supaInit() {
 // ── Pull remote → local ───────────────────────────────────────────────────────
 async function syncDown() {
   if (!_db) return;
-  const { data: { user } } = await _db.auth.getUser();
-  if (!user) return;
+  const { data: { session } } = await _db.auth.getSession();
+  if (!session) { setSyncDot('offline'); return; }
+  const user = session.user;
 
   try {
-    const { data, error } = await _db.from('plans')
-      .select('data, updated_at')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const { data, error } = await withTimeout(
+      _db.from('plans').select('data, updated_at').eq('user_id', user.id).maybeSingle(),
+      8000
+    );
 
-    if (error || !data) { setSyncDot('ok'); return; }
+    if (error) { setSyncDot('error'); return; }
+    if (!data) { setSyncDot('ok'); return; }
 
     const remoteTs = new Date(data.updated_at).getTime();
     const localTs  = st.updatedAt || 0;
 
     if (remoteTs > localTs) {
       Object.assign(st, data.data);
-      save(false); // persist locally without re-triggering syncUp
+      save(false);
       rAll();
     }
     setSyncDot('ok');
@@ -69,15 +78,19 @@ async function syncDown() {
 // ── Push local → remote ───────────────────────────────────────────────────────
 async function syncUp() {
   if (!_db) return;
-  const { data: { user } } = await _db.auth.getUser();
-  if (!user) return;
+  const { data: { session } } = await _db.auth.getSession();
+  if (!session) return;
+  const user = session.user;
 
   try {
     st.updatedAt = Date.now();
     localStorage.setItem('pv1', JSON.stringify(st));
-    const { error } = await _db.from('plans').upsert(
-      { user_id: user.id, data: st, updated_at: new Date().toISOString() },
-      { onConflict: 'user_id' }
+    const { error } = await withTimeout(
+      _db.from('plans').upsert(
+        { user_id: user.id, data: st, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      ),
+      8000
     );
     setSyncDot(error ? 'error' : 'ok');
   } catch (_) {
@@ -160,7 +173,8 @@ async function updateSyncUI() {
     if (el) el.textContent = 'Supabase non configuré (voir config.js)';
     return;
   }
-  const { data: { user } } = await _db.auth.getUser();
+  const { data: { session } } = await _db.auth.getSession();
+  const user = session?.user || null;
   const emailEl  = document.getElementById('sync-user-email');
   const logoutEl = document.getElementById('sync-logout-wrap');
   const loginEl  = document.getElementById('sync-login-wrap');
