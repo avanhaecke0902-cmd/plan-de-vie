@@ -3,6 +3,8 @@ const SYNC_DEBOUNCE = 3000;
 let _db = null;
 let _syncTimer = null;
 let _pendingEmail = null;
+let _session = null;   // session cachée — pas d'appel réseau dans syncDown/syncUp
+let _syncing = false;  // verrou anti-doublons
 
 function withTimeout(promise, ms) {
   return Promise.race([
@@ -20,46 +22,43 @@ async function supaInit() {
     auth: { persistSession: true, storageKey: 'pv1-auth' }
   });
 
-  // Auth state changes (login / logout / token refresh)
-  _db.auth.onAuthStateChange(async (event, session) => {
+  _db.auth.onAuthStateChange((event, session) => {
+    _session = session;
     if (session) {
       hideAuthOverlay();
-      setSyncDot('syncing');
-      await syncDown();
+      if (!_syncing) syncDown();
     } else if (event === 'SIGNED_OUT') {
       setSyncDot('offline');
     }
   });
 
-  // Resume existing session
-  const { data: { session } } = await _db.auth.getSession();
-  if (!session) showAuthOverlay();
-
   // Re-sync when the tab becomes visible or the window gets focus
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && _db) syncDown();
+    if (!document.hidden && _session) syncDown();
   });
-  window.addEventListener('focus', () => { if (_db) syncDown(); });
+  window.addEventListener('focus', () => { if (_session) syncDown(); });
 
-  // Polling toutes les 30 secondes (sync cross-device automatique)
-  setInterval(() => { if (_db) syncDown(); }, 30000);
+  // Polling toutes les 30 secondes
+  setInterval(() => { if (_session) syncDown(); }, 30000);
 }
 
 // ── Pull remote → local ───────────────────────────────────────────────────────
 async function syncDown() {
-  if (!_db) return;
-  const { data: { session } } = await _db.auth.getSession();
-  if (!session) { setSyncDot('offline'); return; }
-  const user = session.user;
+  if (!_db || !_session || _syncing) return;
+  _syncing = true;
+  setSyncDot('syncing');
 
   try {
     const { data, error } = await withTimeout(
-      _db.from('plans').select('data, updated_at').eq('user_id', user.id).maybeSingle(),
+      _db.from('plans')
+        .select('data, updated_at')
+        .eq('user_id', _session.user.id)
+        .maybeSingle(),
       8000
     );
 
     if (error) { setSyncDot('error'); return; }
-    if (!data) { setSyncDot('ok'); return; }
+    if (!data)  { setSyncDot('ok');    return; }
 
     const remoteTs = new Date(data.updated_at).getTime();
     const localTs  = st.updatedAt || 0;
@@ -72,22 +71,21 @@ async function syncDown() {
     setSyncDot('ok');
   } catch (_) {
     setSyncDot('error');
+  } finally {
+    _syncing = false;
   }
 }
 
 // ── Push local → remote ───────────────────────────────────────────────────────
 async function syncUp() {
-  if (!_db) return;
-  const { data: { session } } = await _db.auth.getSession();
-  if (!session) return;
-  const user = session.user;
+  if (!_db || !_session) return;
 
   try {
     st.updatedAt = Date.now();
     localStorage.setItem('pv1', JSON.stringify(st));
     const { error } = await withTimeout(
       _db.from('plans').upsert(
-        { user_id: user.id, data: st, updated_at: new Date().toISOString() },
+        { user_id: _session.user.id, data: st, updated_at: new Date().toISOString() },
         { onConflict: 'user_id' }
       ),
       8000
@@ -100,7 +98,7 @@ async function syncUp() {
 
 // Called by save() in app.js
 function scheduleSyncUp() {
-  if (!_db) return;
+  if (!_db || !_session) return;
   clearTimeout(_syncTimer);
   setSyncDot('pending');
   _syncTimer = setTimeout(syncUp, SYNC_DEBOUNCE);
@@ -159,7 +157,6 @@ async function authVerifyOTP() {
   try {
     const { error } = await _db.auth.verifyOtp({ email: _pendingEmail, token, type: 'email' });
     if (error) throw error;
-    // onAuthStateChange handles the rest
   } catch (_) {
     alert('Code incorrect ou expiré. Réessaie.');
     btn.disabled = false; btn.textContent = 'Se connecter';
@@ -167,18 +164,17 @@ async function authVerifyOTP() {
 }
 
 // ── Settings sync UI ──────────────────────────────────────────────────────────
-async function updateSyncUI() {
+function updateSyncUI() {
   if (!_db) {
     const el = document.getElementById('sync-settings-status');
     if (el) el.textContent = 'Supabase non configuré (voir config.js)';
     return;
   }
-  const { data: { session } } = await _db.auth.getSession();
-  const user = session?.user || null;
+  const user = _session?.user || null;
   const emailEl  = document.getElementById('sync-user-email');
   const logoutEl = document.getElementById('sync-logout-wrap');
   const loginEl  = document.getElementById('sync-login-wrap');
-  if (emailEl)  emailEl.textContent  = user ? user.email : 'Non connecté';
+  if (emailEl)  emailEl.textContent   = user ? user.email : 'Non connecté';
   if (logoutEl) logoutEl.style.display = user ? '' : 'none';
   if (loginEl)  loginEl.style.display  = user ? 'none' : '';
 }
@@ -186,6 +182,7 @@ async function updateSyncUI() {
 async function syncLogout() {
   if (!_db) return;
   await _db.auth.signOut();
+  _session = null;
   setSyncDot('offline');
   updateSyncUI();
 }
