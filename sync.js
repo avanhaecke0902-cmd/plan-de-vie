@@ -28,10 +28,14 @@ async function supaInit() {
   const { data: { session } } = await _db.auth.getSession();
   if (!session) showAuthOverlay();
 
-  // Re-sync when the tab becomes visible (cross-device updates)
+  // Re-sync when the tab becomes visible or the window gets focus
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && _db) syncDown();
   });
+  window.addEventListener('focus', () => { if (_db) syncDown(); });
+
+  // Polling toutes les 30 secondes (sync cross-device automatique)
+  setInterval(() => { if (_db) syncDown(); }, 30000);
 }
 
 // ── Pull remote → local ───────────────────────────────────────────────────────
