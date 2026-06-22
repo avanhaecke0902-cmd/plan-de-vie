@@ -793,6 +793,12 @@ function rTasks(){
   const tasks=st.tasks||[];
   if(!tasks.length){list.innerHTML='<div class="empty">Aucune tâche pour l\'instant</div>';return;}
   list.innerHTML='';
+  const doneCount=tasks.filter(t=>t.done).length;
+  if(doneCount>0){
+    const btn=document.createElement('button');btn.className='task-clear-btn';
+    btn.textContent='Supprimer les '+doneCount+' tâche'+(doneCount>1?'s':'')+' terminée'+(doneCount>1?'s':'');
+    btn.onclick=clearDoneTasks;list.appendChild(btn);
+  }
   const pending=tasks.filter(t=>!t.done);
   const done=tasks.filter(t=>t.done);
   [...pending,...done].forEach(t=>{
@@ -814,6 +820,10 @@ function togTask(id){
 }
 function delTask(id){
   st.tasks=(st.tasks||[]).filter(x=>x.id!==id);
+  save();rTasks();
+}
+function clearDoneTasks(){
+  st.tasks=(st.tasks||[]).filter(t=>!t.done);
   save();rTasks();
 }
 
