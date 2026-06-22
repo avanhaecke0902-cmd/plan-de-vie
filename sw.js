@@ -1,4 +1,4 @@
-const CACHE='plan-vie-v3';
+const CACHE='plan-vie-v4';
 const ASSETS=['./index.html','./style.css','./app.js','./config.js','./sync.js','./manifest.json','./icon.svg'];
 
 self.addEventListener('install',e=>{
@@ -12,5 +12,11 @@ self.addEventListener('activate',e=>{
 });
 
 self.addEventListener('fetch',e=>{
-  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));
+  e.respondWith(
+    fetch(e.request).then(r=>{
+      const clone=r.clone();
+      caches.open(CACHE).then(c=>c.put(e.request,clone));
+      return r;
+    }).catch(()=>caches.match(e.request))
+  );
 });
