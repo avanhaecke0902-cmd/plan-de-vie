@@ -869,23 +869,12 @@ function setTaskDate(id,val){
   if(t){t.date=val||null;save();rTasks();}
 }
 function delTask(id){
-  const t=(st.tasks||[]).find(x=>x.id===id);
-  if(t&&t.done){
-    st.totalXP=Math.max(0,st.totalXP-10);
-    st.txs=st.txs.filter(tx=>tx._tk!==id);
-    st.balance=st.txs.reduce((s,tx)=>s+(tx.type==='earn'?tx.a:-tx.a),0);
-  }
   st.tasks=(st.tasks||[]).filter(x=>x.id!==id);
-  save();rTasks();rHdr();rCagnotte();
+  save();rTasks();
 }
 function clearDoneTasks(){
-  const doneIds=(st.tasks||[]).filter(t=>t.done).map(t=>t.id);
-  const doneCount=doneIds.length;
-  st.totalXP=Math.max(0,st.totalXP-doneCount*10);
-  st.txs=st.txs.filter(tx=>!doneIds.includes(tx._tk));
-  st.balance=st.txs.reduce((s,tx)=>s+(tx.type==='earn'?tx.a:-tx.a),0);
   st.tasks=(st.tasks||[]).filter(t=>!t.done);
-  save();rTasks();rHdr();rCagnotte();
+  save();rTasks();
 }
 
 // ── RENDER — ALL ──────────────────────────────────────────────────────────────
