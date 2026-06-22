@@ -847,7 +847,18 @@ function addTask(){
 }
 function togTask(id){
   const t=(st.tasks||[]).find(x=>x.id===id);
-  if(t){t.done=!t.done;save();rTasks();}
+  if(!t)return;
+  t.done=!t.done;
+  if(t.done){
+    st.totalXP+=10;
+    st.balance+=0.20;
+    st.txs.push({n:t.text,a:0.20,type:'earn',date:dk(),_tk:id});
+  }else{
+    st.totalXP=Math.max(0,st.totalXP-10);
+    st.txs=st.txs.filter(tx=>tx._tk!==id);
+    st.balance=st.txs.reduce((s,tx)=>s+(tx.type==='earn'?tx.a:-tx.a),0);
+  }
+  checkTrophies();save();rTasks();rHdr();rCagnotte();
 }
 function togUrgent(id){
   const t=(st.tasks||[]).find(x=>x.id===id);
@@ -858,12 +869,23 @@ function setTaskDate(id,val){
   if(t){t.date=val||null;save();rTasks();}
 }
 function delTask(id){
+  const t=(st.tasks||[]).find(x=>x.id===id);
+  if(t&&t.done){
+    st.totalXP=Math.max(0,st.totalXP-10);
+    st.txs=st.txs.filter(tx=>tx._tk!==id);
+    st.balance=st.txs.reduce((s,tx)=>s+(tx.type==='earn'?tx.a:-tx.a),0);
+  }
   st.tasks=(st.tasks||[]).filter(x=>x.id!==id);
-  save();rTasks();
+  save();rTasks();rHdr();rCagnotte();
 }
 function clearDoneTasks(){
+  const doneIds=(st.tasks||[]).filter(t=>t.done).map(t=>t.id);
+  const doneCount=doneIds.length;
+  st.totalXP=Math.max(0,st.totalXP-doneCount*10);
+  st.txs=st.txs.filter(tx=>!doneIds.includes(tx._tk));
+  st.balance=st.txs.reduce((s,tx)=>s+(tx.type==='earn'?tx.a:-tx.a),0);
   st.tasks=(st.tasks||[]).filter(t=>!t.done);
-  save();rTasks();
+  save();rTasks();rHdr();rCagnotte();
 }
 
 // ── RENDER — ALL ──────────────────────────────────────────────────────────────
