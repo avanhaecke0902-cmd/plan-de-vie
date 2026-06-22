@@ -183,6 +183,14 @@
       <input type="file" id="json-import" accept=".json" style="display:none" onchange="doImportJSON(this)">
       <button class="btn" style="margin-top:8px;background:var(--muted)" onclick="document.getElementById('json-import').click()">Restaurer depuis un fichier JSON</button>
     </div>
+    <!-- TÂCHES -->
+    <div id="view-tasks" class="view">
+      <div class="task-input-row">
+        <input type="text" id="task-input" placeholder="Nouvelle tâche..." onkeydown="if(event.key==='Enter')addTask()">
+        <button class="task-add-btn" onclick="addTask()">Ajouter</button>
+      </div>
+      <div id="task-list"></div>
+    </div>
     <!-- BILAN -->
     <div id="view-bilan" class="view">
       <div class="st" style="margin-top:0">Bilan de cette semaine</div>
@@ -190,7 +198,7 @@
         <h3>📖 Bilan</h3>
         <textarea id="b-bilan" placeholder="Comment s'est passée cette semaine ? Points forts, difficultés, apprentissages..."></textarea>
       </div>
-      <div class="st" style="margin-top:8px;margin-bottom:4px">Planification — semaine prochaine</div>
+      <div class="st" id="bilan-plan-title" style="margin-top:8px;margin-bottom:4px">Planification — semaine prochaine</div>
       <div class="bilan-block">
         <h3>📅 Lundi</h3>
         <textarea id="b-lundi" placeholder="Ce que tu as prévu ou ce sur quoi tu veux rester focus lundi..."></textarea>
@@ -229,6 +237,7 @@
     <button class="nb" onclick="sv('semaine',this)"><span class="ni">📊</span>Suivi</button>
     <button class="nb" onclick="sv('trophees',this)"><span class="ni">🏆</span>Trophées</button>
     <button class="nb" onclick="sv('cagnotte',this)"><span class="ni">💰</span>Cagnotte</button>
+    <button class="nb" onclick="sv('tasks',this);rTasks()"><span class="ni">📋</span>Tâches</button>
     <button class="nb" onclick="sv('bilan',this);loadBilan()"><span class="ni">📝</span>Bilan</button>
     <button class="nb" onclick="sv('params',this);rParams();if(typeof updateSyncUI==='function')updateSyncUI()"><span class="ni">⚙</span>Réglages</button>
   </nav>
