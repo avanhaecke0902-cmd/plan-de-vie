@@ -489,6 +489,8 @@ function rTrophees(){
 
 // ── RENDER — CAGNOTTE ─────────────────────────────────────────────────────────
 function rCagnotte(){
+  const balCard=document.getElementById('bal-card');
+  if(balCard)balCard.style.background=st.balance<0?'var(--danger)':'var(--primary)';
   document.getElementById('bal').textContent=st.balance.toFixed(2);
   document.getElementById('bal-wk').textContent=wkBgt().toFixed(2);
   const canvas=document.getElementById('bgt-chart');
@@ -858,7 +860,6 @@ function addPurchase(){
   const n=document.getElementById('pur-n').value.trim();
   const a=parseFloat(document.getElementById('pur-a').value);
   if(!n||isNaN(a)||a<=0){alert('Remplis les deux champs.');return;}
-  if(a>st.balance+0.001){alert('Montant supérieur à ta cagnotte ('+st.balance.toFixed(2)+' €) !');return;}
   st.balance-=a;st.txs.push({n,a,type:'spend',date:dk()});
   document.getElementById('pur-n').value='';document.getElementById('pur-a').value='';
   checkTrophies();save();rAll();
