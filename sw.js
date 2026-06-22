@@ -1,4 +1,4 @@
-const CACHE='plan-vie-v2';
+const CACHE='plan-vie-v3';
 const ASSETS=['./index.html','./style.css','./app.js','./config.js','./sync.js','./manifest.json','./icon.svg'];
 
 self.addEventListener('install',e=>{
