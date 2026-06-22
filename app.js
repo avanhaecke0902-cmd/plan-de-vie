@@ -788,35 +788,74 @@ function doImportJSON(input){
 }
 
 // ── TASKS ─────────────────────────────────────────────────────────────────────
+function dateBadgeLabel(date){
+  const today=dk();const t=new Date();t.setDate(t.getDate()+1);const tom=t.toISOString().slice(0,10);
+  if(date===today)return'Aujourd\'hui';
+  if(date===tom)return'Demain';
+  return date.slice(8,10)+'/'+date.slice(5,7);
+}
+function dateBadgeClass(date){
+  const today=dk();if(date<today)return'overdue';if(date===today)return'today';return'';
+}
 function rTasks(){
   const list=document.getElementById('task-list');if(!list)return;
   const tasks=st.tasks||[];
-  if(!tasks.length){list.innerHTML='<div class="empty">Aucune tâche pour l\'instant</div>';return;}
+  if(!tasks.length){list.innerHTML='<div class="empty">Aucune tâche pour l\'instant</div>';rTodayTasks();return;}
   list.innerHTML='';
-  const doneCount=tasks.filter(t=>t.done).length;
-  if(doneCount>0){
-    const btn=document.createElement('button');btn.className='task-clear-btn';
-    btn.textContent='Supprimer les '+doneCount+' tâche'+(doneCount>1?'s':'')+' terminée'+(doneCount>1?'s':'');
-    btn.onclick=clearDoneTasks;list.appendChild(btn);
-  }
-  const pending=tasks.filter(t=>!t.done);
+  const urgent=tasks.filter(t=>!t.done&&t.urgent);
+  const pending=tasks.filter(t=>!t.done&&!t.urgent);
   const done=tasks.filter(t=>t.done);
-  [...pending,...done].forEach(t=>{
-    const el=document.createElement('div');el.className='task-item'+(t.done?' done':'');
-    el.innerHTML=`<div class="task-check" onclick="togTask('${t.id}')"><svg class="ck" viewBox="0 0 12 12"><polyline points="1.5,6 5,9.5 10.5,2.5"/></svg></div><div class="task-text" onclick="togTask('${t.id}')">${esc(t.text)}</div><button class="task-del" onclick="delTask('${t.id}')">✕</button>`;
-    list.appendChild(el);
-  });
+  const makeItem=t=>{
+    const el=document.createElement('div');
+    if(t.done){
+      el.className='task-item done';
+      el.innerHTML=`<div class="task-check" onclick="togTask('${t.id}')"><svg class="ck" viewBox="0 0 12 12"><polyline points="1.5,6 5,9.5 10.5,2.5"/></svg></div><div class="task-text" onclick="togTask('${t.id}')">${esc(t.text)}</div><button class="task-del" onclick="delTask('${t.id}')">✕</button>`;
+    }else{
+      el.className='task-item'+(t.urgent?' urgent':'');
+      const badge=t.date?`<span class="task-date-badge ${dateBadgeClass(t.date)}">${dateBadgeLabel(t.date)}</span>`:'';
+      el.innerHTML=`<div class="task-check" onclick="togTask('${t.id}')"><svg class="ck" viewBox="0 0 12 12"><polyline points="1.5,6 5,9.5 10.5,2.5"/></svg></div><div class="task-text" onclick="togTask('${t.id}')">${esc(t.text)}${badge}</div><button class="task-action-btn${t.urgent?' urgent-active':''}" onclick="togUrgent('${t.id}')" title="Urgent">⚡</button><label class="task-action-btn" title="Assigner un jour" style="position:relative"><input type="date" value="${t.date||''}" onchange="setTaskDate('${t.id}',this.value)" style="position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer">📅</label><button class="task-del" onclick="delTask('${t.id}')">✕</button>`;
+    }
+    return el;
+  };
+  [...urgent,...pending].forEach(t=>list.appendChild(makeItem(t)));
+  if(done.length){
+    const btn=document.createElement('button');btn.className='task-clear-btn';
+    btn.textContent='Supprimer les '+done.length+' tâche'+(done.length>1?'s':'')+' terminée'+(done.length>1?'s':'');
+    btn.onclick=clearDoneTasks;list.appendChild(btn);
+    done.forEach(t=>list.appendChild(makeItem(t)));
+  }
+  rTodayTasks();
+}
+function rTodayTasks(){
+  const el=document.getElementById('today-tasks');if(!el)return;
+  const today=dk();
+  const tasks=(st.tasks||[]).filter(t=>!t.done&&t.date===today);
+  if(!tasks.length){el.innerHTML='';return;}
+  el.innerHTML='<div class="st" style="margin-top:12px">📋 Tâches du jour</div>'+
+    tasks.map(t=>`<div class="today-task${t.urgent?' urgent':''}">
+      <div class="today-task-check" onclick="togTask('${t.id}')"><svg class="ck" viewBox="0 0 12 12"><polyline points="1.5,6 5,9.5 10.5,2.5"/></svg></div>
+      <div class="today-task-text">${esc(t.text)}</div>
+      ${t.urgent?'<span class="today-task-urgent">⚡ Urgent</span>':''}
+    </div>`).join('');
 }
 function addTask(){
   const input=document.getElementById('task-input');
   const text=input.value.trim();if(!text)return;
   if(!st.tasks)st.tasks=[];
-  st.tasks.push({id:'tk'+Date.now(),text,done:false});
+  st.tasks.push({id:'tk'+Date.now(),text,done:false,urgent:false,date:null});
   input.value='';save();rTasks();
 }
 function togTask(id){
   const t=(st.tasks||[]).find(x=>x.id===id);
   if(t){t.done=!t.done;save();rTasks();}
+}
+function togUrgent(id){
+  const t=(st.tasks||[]).find(x=>x.id===id);
+  if(t){t.urgent=!t.urgent;save();rTasks();}
+}
+function setTaskDate(id,val){
+  const t=(st.tasks||[]).find(x=>x.id===id);
+  if(t){t.date=val||null;save();rTasks();}
 }
 function delTask(id){
   st.tasks=(st.tasks||[]).filter(x=>x.id!==id);
